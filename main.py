@@ -53,7 +53,11 @@ def init_webdriver():
     options.add_experimental_option("prefs", prefs)
 
     driver = webdriver.Chrome(options=options)
-    stealth(driver, platform="Win32")
+    stealth(driver,
+            platform="Win32",
+            vendor="Google Inc.",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine")
     return driver
 
 def clean_name(name: str):
@@ -81,7 +85,7 @@ async def get_price_and_name(driver: webdriver.Chrome, article: str | int):
 
     t = time()
     while "Antibot" in driver.title:
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.1)
     print(f"It took {time() - t} seconds to bypass bot detection")
 
     t = time()
