@@ -2,6 +2,8 @@ from selenium import webdriver
 from selenium_stealth import stealth
 from selenium.webdriver.chrome.options import Options
 
+from time import time
+
 from bs4 import BeautifulSoup, NavigableString
 
 import asyncio
@@ -19,6 +21,27 @@ def init_webdriver():
     options.add_argument("--blink-settings=imagesEnabled=false")
     options.add_argument("--webview-safebrowsing-block-all-resources")
 
+    options.add_argument("--disable-background-networking")
+    options.add_argument("--disable-default-apps")
+    options.add_argument("--disable-sync")
+    options.add_argument("--disable-translate")
+    options.add_argument("--disable-background-timer-throttling")
+    options.add_argument("--disable-backgrounding-occluded-windows")
+
+    options.add_argument("--safebrowsing-disable-auto-update")
+    options.add_argument("--safebrowsing-disable-download-protection")
+
+    options.add_argument("--disable-site-isolation-trials")
+    options.add_argument("--metrics-recording-only")  # Only records minimal metrics, saving some processing.
+    options.add_argument("--disable-hang-monitor")    # Prevents Chrome from monitoring for hangs, saving some resources.
+
+    options.add_argument("--disable-webgl")
+    options.add_argument("--disable-infobars")
+    options.add_argument("--disable-webrtc")
+    options.add_argument("--autoplay-policy=user-gesture-required")
+
+    options.add_argument("--renderer-process-limit=1")
+    options.add_argument("--disable-ipc-flooding-protection")
 
     prefs = {
         "profile.managed_default_content_settings.images": 2,
@@ -28,8 +51,6 @@ def init_webdriver():
         "profile.managed_default_content_settings.plugins": 2
     }
     options.add_experimental_option("prefs", prefs)
-
-    options.add_argument("--disable-blink-features=AutomationControlled")
 
     driver = webdriver.Chrome(options=options)
     stealth(driver, platform="Win32")
@@ -54,11 +75,16 @@ def price_from_spans(priceSpans):
     return parse_price(price_span)
 
 async def get_price_and_name(driver: webdriver.Chrome, article: str | int):
+    t = time()
     driver.get(f"https://ozon.ru/product/{article}")
+    print(f"It took {time() - t} seconds to load the page")
 
+    t = time()
     while "Antibot" in driver.title:
         await asyncio.sleep(0.5)
+    print(f"It took {time() - t} seconds to bypass bot detection")
 
+    t = time()
     raw_html = BeautifulSoup(driver.page_source, "html.parser")
 
     name_header = raw_html.find("h1")
@@ -72,13 +98,15 @@ async def get_price_and_name(driver: webdriver.Chrome, article: str | int):
 
     price = price_from_spans(price_spans)
 
+    print(f"It took {time() - t} seconds to parse data")
     return name, price
 
 async def main():
     driver = init_webdriver()
 
     for _ in range(2):
-        article = input("Введите артикул товара")
+        # article = input("Введите артикул товара")
+        article = 1361717848
 
         name, price = await get_price_and_name(driver, article)
         print(f"Название товара: {name}")
